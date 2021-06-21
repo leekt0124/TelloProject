@@ -3,6 +3,7 @@ import cv2
 import pygame
 import numpy as np
 import time
+import logging
 
 from threading import Thread
 
@@ -34,6 +35,9 @@ class FrontEnd(object):
 
         # Init Tello object that interacts with the Tello drone
         self.tello = Tello()
+
+        # Set logger level
+        Tello.LOGGER.setLevel(logging.WARNING)
 
         # Drone velocities between -100~100
         self.for_back_velocity = 0
@@ -75,6 +79,8 @@ class FrontEnd(object):
                         self.keydown(event.key)
                 elif event.type == pygame.KEYUP:
                     self.keyup(event.key)
+                    
+            print(self.tello.get_speed_x(), self.tello.get_speed_y(), self.tello.get_speed_z(), self.tello.get_yaw())
 
         pygame.quit()
         
