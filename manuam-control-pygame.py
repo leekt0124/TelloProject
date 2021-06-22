@@ -4,6 +4,7 @@ import pygame
 import numpy as np
 import time
 import logging
+import math
 
 from threading import Thread
 
@@ -14,7 +15,7 @@ S = 60
 FPS = 120
 
 
-class FrontEnd(object):
+class Drone(object):
     """ Maintains the Tello display and moves it through the keyboard keys.
         Press escape key to quit.
         The controls are:
@@ -51,6 +52,11 @@ class FrontEnd(object):
 
         self.video_t = Thread(target=self.video)
 
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.yaw = 0
+
         # create update timer
         pygame.time.set_timer(pygame.USEREVENT + 1, 1000 // FPS)
 
@@ -64,23 +70,30 @@ class FrontEnd(object):
 
         self.frame_read = self.tello.get_frame_read()
 
-    def run(self):
-        while not self.should_stop:
-
-            for event in pygame.event.get():
-                if event.type == pygame.USEREVENT + 1:
-                    self.update()
-                elif event.type == pygame.QUIT:
+    def control(self):
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT + 1:
+                self.update()
+            elif event.type == pygame.QUIT:
+                self.should_stop = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     self.should_stop = True
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.should_stop = True
-                    else:
-                        self.keydown(event.key)
-                elif event.type == pygame.KEYUP:
-                    self.keyup(event.key)
-                    
-            print(self.tello.get_speed_x(), self.tello.get_speed_y(), self.tello.get_speed_z(), self.tello.get_yaw())
+                else:
+                    self.keydown(event.key)
+            elif event.type == pygame.KEYUP:
+                self.keyup(event.key)
+
+    def run(self):
+        curr_time = time.time()
+        while not self.should_stop:
+            # Manual control
+            self.control()
+
+            # Odometry
+            elapsed_time = time.time() - curr_time
+            curr_time = time.time()
+            self.odometry(elapsed_time)
 
         pygame.quit()
         
@@ -146,13 +159,35 @@ class FrontEnd(object):
             cv2.imshow("video", frame)
             cv2.waitKey(1)
 
+    def odometry(self, elapsed_time):
+        # print(self.tello.get_speed_x(), self.tello.get_speed_y(), self.tello.get_speed_z(), self.tello.get_yaw())
+        print(self.tello.get_acceleration_x(), self.tello.get_acceleration_y(), self.tello.get_acceleration_z())
+        v_y = self.tello.get_speed_x()
+        v_x = self.tello.get_speed_y()
+        v_z = - self.tello.get_speed_z()
+        # self.yaw = self.tello.get_yaw()
+        # self.x += (v_x * math.cos(math.radians(self.yaw)) + v_y * math.sin(math.radians(self.yaw))) * elapsed_time
+        # self.y += (- v_x * math.sin(math.radians(self.yaw)) + v_y * math.cos(math.radians(self.yaw))) * elapsed_time
+        self.x += v_x * elapsed_time
+        self.y += v_y * elapsed_time
+        self.z += v_z * elapsed_time
+
+        # print(self.x, self.y, self.z, self.tello.get_height(), self.tello.get_barometer())
+        self.draw()
+
+    def draw(self):
+        img = np.zeros((1000, 1000, 3), np.uint8)
+        cv2.circle(img, (50+x, 50+y), 10, (0, 0, 255), cv2.FILLED)
+        cv2.imshow("position simulation", img)
+        cv2.waitKey(1)
+
 
 def main():
-    frontend = FrontEnd()
+    drone = Drone()
     
-    frontend.connect()
-    frontend.video_t.start()
-    frontend.run()
+    drone.connect()
+    drone.video_t.start()
+    drone.run()
 
 if __name__ == '__main__':
     main()
