@@ -160,6 +160,8 @@ class Drone(object):
             cv2.waitKey(1)
 
     def odometry(self, elapsed_time):
+        # Currently I am using dead reckoning method, which accumulates error easily and will shift drone from its expected localized position
+        # Orientation information from Tello is pretty accurate though
         # print(self.tello.get_speed_x(), self.tello.get_speed_y(), self.tello.get_speed_z(), self.tello.get_yaw())
         print(self.tello.get_acceleration_x(), self.tello.get_acceleration_y(), self.tello.get_acceleration_z())
         v_y = self.tello.get_speed_x()
