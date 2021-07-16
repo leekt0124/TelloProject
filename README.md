@@ -3,3 +3,4 @@ TelloProject is my 2021 summer side project that aims to bring Tello drones to o
 ### reference:
 [DJITelloPy Library](https://github.com/damiafuentes/DJITelloPy)  
 [Tello SDK 2.0 User Guide](https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf) 
+[OpenCV](https://opencv.org/)
